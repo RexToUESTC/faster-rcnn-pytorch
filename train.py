@@ -80,7 +80,8 @@ if __name__ == "__main__":
     #   一般来讲，网络从0开始的训练效果会很差，因为权值太过随机，特征提取效果不明显，因此非常、非常、非常不建议大家从0开始训练！
     #   如果一定要从0开始，可以了解imagenet数据集，首先训练分类模型，获得网络的主干部分权值，分类模型的 主干部分 和该模型通用，基于此进行训练。
     #----------------------------------------------------------------------------------------------------------------------------#
-    model_path      = 'model_data/voc_weights_resnet.pth'
+    # model_path      = 'model_data/voc_weights_resnet.pth'
+    model_path      = ''
     #------------------------------------------------------#
     #   input_shape     输入的shape大小
     #------------------------------------------------------#
@@ -96,7 +97,7 @@ if __name__ == "__main__":
     #                   如果不设置model_path，pretrained = True，此时仅加载主干开始训练。
     #                   如果不设置model_path，pretrained = False，Freeze_Train = Fasle，此时从0开始训练，且没有冻结主干的过程。
     #----------------------------------------------------------------------------------------------------------------------------#
-    pretrained      = False
+    pretrained      = True
     #------------------------------------------------------------------------#
     #   anchors_size用于设定先验框的大小，每个特征点均存在9个先验框。
     #   anchors_size每个数对应3个先验框。
@@ -252,7 +253,7 @@ if __name__ == "__main__":
         #------------------------------------------------------#
         #   根据预训练权重的Key和模型的Key进行加载
         #------------------------------------------------------#
-        device          = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device          = torch.device('cuda' if torch.cuda.is_available() else 'mps')
         model_dict      = model.state_dict()
         pretrained_dict = torch.load(model_path, map_location = device)
         load_key, no_load_key, temp_dict = [], [], {}
@@ -292,7 +293,10 @@ if __name__ == "__main__":
     if Cuda:
         model_train = torch.nn.DataParallel(model_train)
         cudnn.benchmark = True
-        model_train = model_train.cuda()
+        if torch.cuda.is_available():
+            model_train = model_train.cuda()
+        elif torch.mps.is_available():
+            model_train.to('mps')
 
     #---------------------------#
     #   读取数据集对应的txt

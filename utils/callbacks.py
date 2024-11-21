@@ -98,8 +98,12 @@ class EvalCallback():
         self.period             = period
         
         self.std    = torch.Tensor([0.1, 0.1, 0.2, 0.2]).repeat(self.num_classes + 1)[None]
-        if self.cuda:
+        if self.cuda and torch.cuda.is_available():
             self.std    = self.std.cuda()
+        elif torch.mps.is_available():
+            self.std    = self.std.to('mps')
+        else:
+            self.std    = self.std.cpu()
         self.bbox_util  = DecodeBox(self.std, self.num_classes)
 
         self.maps       = [0]
@@ -136,8 +140,12 @@ class EvalCallback():
 
         with torch.no_grad():
             images = torch.from_numpy(image_data)
-            if self.cuda:
+            if self.cuda and torch.cuda.is_available():
                 images = images.cuda()
+            elif torch.mps.is_available():
+                images = images.to('mps')
+            else:
+                images = images.cpu()
 
             roi_cls_locs, roi_scores, rois, _ = self.net(images)
             #-------------------------------------------------------------#

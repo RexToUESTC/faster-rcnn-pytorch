@@ -21,8 +21,12 @@ def fit_one_epoch(model, train_util, loss_history, eval_callback, optimizer, epo
                 break
             images, boxes, labels = batch[0], batch[1], batch[2]
             with torch.no_grad():
-                if cuda:
+                if cuda and torch.cuda.is_available():
                     images = images.cuda()
+                elif torch.mps.is_available():
+                    images = images.to('mps')
+                else:
+                    images = images.cpu()
 
             rpn_loc, rpn_cls, roi_loc, roi_cls, total = train_util.train_step(images, boxes, labels, 1, fp16, scaler)
             total_loss      += total.item()
